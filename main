@@ -1,0 +1,112 @@
+Sub 东本更新车型信息代码()
+
+    t = Timer
+    Dim myPath$, myFile$, str1$
+    Dim WK As Workbook
+    Dim WT As Workbook
+    Dim WS As Worksheet
+    Dim WS1 As Worksheet
+    Dim max_row As Long, max_col As Long
+    Dim Percentagebefore As Double, Percentageafter As Double, Percentage As Double
+    Dim arr_yuan As Variant, arr_his As Variant, arr_1 As Variant
+    
+    
+    Application.ScreenUpdating = True '冻结屏幕，以防屏幕抖动
+    Application.ScreenUpdating = True
+    
+    '打开<车型信息> sheet
+    ThisWorkbook.Worksheets("车型信息").Activate
+    max_row = ThisWorkbook.Worksheets("车型信息").Range("A1").End(xlDown).Row  '最大行
+    max_col = ThisWorkbook.Worksheets("车型信息").Range("A1").End(xlToRight).Column  '最大列
+    arr_yuan = ThisWorkbook.Worksheets("车型信息").Range(Cells(1, 1), Cells(max_row, max_col))  '历史价格导数数组
+    
+    arr_1 = Range(Cells(1, 1), Cells(1, max_col))       '建立数组
+    '历史价格导数建立字典
+    Set dic = CreateObject("scripting.dictionary")
+    For i = 2 To max_row
+        dic(arr_yuan(i, 1)) = _
+        arr_yuan(i, 2) & "," & arr_yuan(i, 3) & "," & arr_yuan(i, 4) & "," & arr_yuan(i, 5) & "," & arr_yuan(i, 6) & "," & arr_yuan(i, 7) & "," & arr_yuan(i, 8) & "," & arr_yuan(i, 9) & "," & arr_yuan(i, 10) & "," & arr_yuan(i, 11) & "," & arr_yuan(i, 12) & "," & arr_yuan(i, 13) & "," & arr_yuan(i, 14) & "," & arr_yuan(i, 15) & "," & arr_yuan(i, 16) & "," & arr_yuan(i, 17) & "," & arr_yuan(i, 18) & "," & arr_yuan(i, 19)
+    Next                                                                                     '前6列串起来作为key后6列串起来作为item
+    
+'    k = dic.Count
+'    arr1 = dic_anzhuang.keys
+'    arr2 = dic_anzhuang.Items
+    
+    myPath = ThisWorkbook.Path & "\REPORT\"
+    myFile = Dir(myPath & "*.xlsx")    '依次找寻指定路径中的*.xls文件
+
+    Do While myFile <> ""                    '当指定路径中有文件时进行循环
+    If myFile <> ThisWorkbook.Name Then
+    Debug.Print myFile                          '输出当前文件名称
+    Set WK = GetObject(myPath & myFile) ' , "Excel.Application"，Workbooks.Open(myPath & myFile) '打开符合要求的文件
+    'Set WS = WK.Worksheets(1)
+    Set WS = WK.Worksheets("数据源")
+    
+    arr_his = WS.UsedRange
+    RowCount = UBound(arr_his)                      '总行数
+    
+    WK.Close True
+    'Application.Count (Application.Match(arr_his, Array("1"), 0))
+    For i = 2 To UBound(arr_his)
+            str1 = arr_his(i, 4)
+             If dic.exists(str1) Then                                                 '如果串起来的6列在字典里存在
+                arr_1 = Split(dic(str1), ",")
+                'arr_his(i, 4) = arr_1(1)
+                'arr_his(i, 5) = arr_1(2)
+                arr_his(i, 6) = arr_1(5)
+                arr_his(i, 7) = arr_1(6)
+                arr_his(i, 8) = arr_1(7)
+                arr_his(i, 9) = arr_1(8)
+                arr_his(i, 10) = arr_1(9)
+                arr_his(i, 11) = arr_1(1)
+                arr_his(i, 12) = arr_1(2)
+                arr_his(i, 13) = arr_1(3)
+                arr_his(i, 14) = arr_1(10)
+                arr_his(i, 15) = arr_1(11)
+                arr_his(i, 16) = arr_1(12)
+                arr_his(i, 17) = arr_1(14)
+                arr_his(i, 18) = arr_1(15)
+                arr_his(i, 19) = arr_1(16)
+                arr_his(i, 20) = arr_1(17)
+                arr_his(i, 21) = arr_1(4)
+                
+            End If
+    Next
+    
+   End If
+    
+   
+   Set WT = Workbooks.Add
+   Set WS1 = WT.Sheets(1)
+   WS1.Columns("D:D").NumberFormatLocal = "@"
+   WS1.Range("A1").Resize(UBound(arr_his, 1), UBound(arr_his, 2)) = arr_his
+   WS1.Columns("D:D").NumberFormatLocal = "@"
+   
+   WT.SaveAs Filename:=ThisWorkbook.Path & "\RESULT\" & Mid(myFile, 1, 32) & "-" & Format(Now, "yyyymmddhhnn") & ".xlsx" _
+        , FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+   WT.Close True
+   
+   Erase arr_his
+   
+   myFile = Dir '找寻下一个*.xls文件
+   Loop
+   
+    Application.ScreenUpdating = True '冻结屏幕,此类语句一般成对使用
+    MsgBox "车型信息更新已完成：" & Timer - t
+    
+End Sub
+
+Function fix_tp(tp, i)
+
+    Dim res
+    
+    Data = ThisWorkbook.Worksheets("价格段").Range("A1:F126").CurrentRegion.Value
+    For j = 1 To UBound(Data)
+        If tp >= Data(j, 5) And tp <= Data(j, 6) And i = Data(j, 4) Then
+            res = Data(j, 3)
+        End If
+    Next j
+    
+    fix_tp = res
+
+End Function
